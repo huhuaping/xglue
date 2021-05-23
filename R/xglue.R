@@ -12,12 +12,19 @@
 #' @param just.pre Just compile the pre blocks and return the resulting template.
 #' @returns The glued text as a single character
 #' @export
-xglue = function(txt, envir=parent.frame(),open="{", close="}",pre.open="<<", pre.close=">>", block.open="#<", block.close="#>", enclos=parent.frame(), newline = "<<newline>>", just.pre=FALSE) {
+#' 
+
+txt <- c("hello", "world", "!")
+txt <- tpl
+
+xglue = function(txt, envir=parent.frame(),open="{", close="}",pre.open="<<", pre.close=">>", 
+                 block.open="#<", block.close="#>", enclos=parent.frame(), 
+                 newline = "<<newline>>", just.pre=FALSE) {
   restore.point("xglue")
   #stop()
   txt = sep.lines(txt)
 
-  # Remove ignore blocks
+  # Remove ignore blocks -----
   bdf = find.nested.blocks(txt, block.open, block.close)
   ibdf = bdf %>% filter(type=="ignore")
   if (NROW(ibdf)>0) {
@@ -27,12 +34,15 @@ xglue = function(txt, envir=parent.frame(),open="{", close="}",pre.open="<<", pr
     txt = txt[-remove.lines]
   }
 
-  # Compile pre blocks
-  txt = xglue.pre(txt,envir, open=pre.open, close=pre.close, enclos=enclos,bdf=bdf, newline=newline, block.open=block.open, block.close=block.close)
+  # Compile pre blocks -----
+  txt = xglue.pre(txt,envir, open=pre.open, close=pre.close,  # inner function see below
+                  enclos=enclos,bdf=bdf, newline=newline, 
+                  block.open=block.open, block.close=block.close)
 
   if (just.pre) return(paste0(txt, collapse="\n"))
   
-  bdf = parse.xglue.blocks(txt, newline=newline, block.open=block.open, block.close=block.close)
+  bdf = parse.xglue.blocks(txt, newline=newline, 
+                           block.open=block.open, block.close=block.close)
   
   
   if (is.list(envir)) {
@@ -54,7 +64,7 @@ xglue = function(txt, envir=parent.frame(),open="{", close="}",pre.open="<<", pr
   txt.sep = rep("\n", length(txt))
   txt.sep[length(txt)] = ""
 
-  # Remove sep blocks from bdf and txt
+  # Remove sep blocks from bdf and txt -----
   sep.rows = which(bdf$type=="sep")
   for (row in sep.rows) {
     lines = bdf$start[row]:bdf$end[row]
@@ -75,7 +85,9 @@ xglue = function(txt, envir=parent.frame(),open="{", close="}",pre.open="<<", pr
   return(str)
 }
 
-xglue.pre = function(txt, envir=parent.frame(),open="<<", close=">>", block.open="#<", block.close="#>", enclos=parent.frame(), newline="<<newline>>", bdf=NULL) {
+xglue.pre = function(txt, envir=parent.frame(),open="<<", close=">>", 
+                     block.open="#<", block.close="#>",
+                     enclos=parent.frame(), newline="<<newline>>", bdf=NULL) {
   restore.point("xlgue.pre")
   if (is.null(bdf))
     bdf = find.nested.blocks(txt, block.open, block.close)
@@ -136,7 +148,7 @@ glue.use.block = function(row, edit, bdf) {
 
   str.li = rep("",length(split.li))
 
-  # Get glue results for all splits
+  # Get glue results for all splits -----
   for (si in seq_along(split.li)) {
     edit = as.environment(as.list(org.edit))
     edit$cur.env = new.env(parent=org.edit$cur.env)
@@ -153,7 +165,7 @@ glue.use.block = function(row, edit, bdf) {
 glue.collapse.block = function(row, edit, bdf) {
   restore.point("glue.collapse.block")
 
-  # xglue children
+## xglue children-----
   glue.all.with.parent(row, edit, bdf)
 
   dat.name = bdf$use[row]
@@ -188,7 +200,8 @@ replace.block.edit.txt = function(str,row, edit, bdf) {
   invisible(edit)
 }
 
-parse.xglue.blocks = function(txt, newline="<<newline>>", block.open="#<", block.close="#>") {
+parse.xglue.blocks = function(txt, newline="<<newline>>", 
+                              block.open="#<", block.close="#>") {
   restore.point("parse.xglue.blocks")
   txt = sep.lines(txt)
   bdf = find.nested.blocks(txt, block.open, block.close) 

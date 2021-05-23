@@ -1,0 +1,85 @@
+---
+title: "learn"
+author: "胡华平"
+date: "2021/5/22"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r, eval=FALSE}
+options(repos = c(
+  skranz = 'https://skranz.r-universe.dev',
+  CRAN = 'https://cloud.r-project.org'))
+
+install.packages('xglue')
+```
+
+
+```{r}
+library(xglue)
+tpl = readLines(system.file("examples/hello_tpl.txt",package="xglue"))
+names = c("Anton","Berta","Charly")
+myname = "Sebastian"
+xglue(tpl)
+```
+
+```{r}
+library(dplyr)
+data(starwars)
+dat = starwars %>%
+  filter(species %in% c("Droid","Wookiee")) %>%
+  select(species, name, homeworld)
+dat
+```
+
+```{r, results="asis"}
+library(xglue)
+# A helper function used in the template
+fill = function(str="",len=10, fill=" ") {
+  add = paste0(rep(fill, len),collapse="")
+  str=substring(paste0(str,add),1, len)
+  str
+}
+tpl = readLines(system.file("examples/starwars_tpl.md",package="xglue"))
+xglue(tpl)
+```
+
+```{r, results="asis"}
+library(forcats)
+dat = starwars %>%
+  mutate(
+    homeworld = fct_explicit_na(homeworld,"unknown"), 
+    species = species %>%
+      as.factor() %>%
+      # Sort by frequency
+      fct_infreq(TRUE) %>%
+      # Lump together if there are less than 2 species
+      fct_lump_min(2,other_level = "Other") %>%
+      # Change NA value also to Other
+      fct_explicit_na("Other")
+  )%>%
+  arrange(species, name)
+xglue(tpl)
+
+```
+
+```{r results='asis'}
+#data <- dat
+md_table = function(data, cols) {
+  str = knitr::kable(data[,cols], "pipe")
+  str = paste0(str, collapse="\n")
+}
+cols = c("name","homeworld","hair_color")
+films <- dat$films[[1]]
+tpl = readLines(system.file("examples/starwars2_tpl.md",package="xglue"))
+xglue(tpl)
+```
+
+```{r results='asis'}
+pre.tpl = readLines(system.file("examples/starwars_pre_tpl.md",package="xglue"))
+ns<- 20
+tpl = xglue(pre.tpl,just.pre = TRUE)
+```
